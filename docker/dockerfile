@@ -1,12 +1,13 @@
-# Używamy lekkiej wersji Pythona
 FROM python:3.11-slim
 
-# Ustawiamy folder roboczy wewnątrz kontenera
-WORKDIR /.
+WORKDIR /app
 
-# Kopiujemy listę bibliotek i instalujemy je
+# Kopiujemy requirements i instalujemy
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Domyślnie uruchamiamy terminal (pozwoli to na testy)
+# Kopiujemy resztę kodu (na wypadek, gdybyśmy nie używali wolumenów, np. w chmurze)
+COPY . .
+
+# Uruchamiamy główny skrypt
 CMD ["python", "src/main.py"]

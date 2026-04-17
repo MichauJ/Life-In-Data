@@ -4,9 +4,9 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     volumes:
-      - ./src:/src
-      - ./data:/data
-      # POPRAWIONA ŚCIEŻKA (Dopasowana do Twojego systemu):
-      - "/mnt/g/Mój dysk:/gdrive_raw:ro"
+      # Mapujemy cały bieżący folder projektu (kropka) do /app w kontenerze
+      - .:/app
+      # Mapujemy dane surowe z Google Drive do podfolderu gdrive_raw
+      - "/mnt/g/Mój dysk:/app/gdrive_raw:ro"
     environment:
       - PYTHONUNBUFFERED=1
