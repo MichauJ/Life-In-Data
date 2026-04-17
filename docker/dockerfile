@@ -2,7 +2,7 @@
 FROM python:3.11-slim
 
 # Ustawiamy folder roboczy wewnątrz kontenera
-WORKDIR /app
+WORKDIR /.
 
 # Kopiujemy listę bibliotek i instalujemy je
 COPY requirements.txt .
