@@ -1,0 +1,12 @@
+# Używamy lekkiej wersji Pythona
+FROM python:3.11-slim
+
+# Ustawiamy folder roboczy wewnątrz kontenera
+WORKDIR /app
+
+# Kopiujemy listę bibliotek i instalujemy je
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Domyślnie uruchamiamy terminal (pozwoli to na testy)
+CMD ["python", "src/main.py"]

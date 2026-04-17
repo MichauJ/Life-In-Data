@@ -1,0 +1,12 @@
+services:
+  etl_engine:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./src:/src
+      - ./data:/data
+      # POPRAWIONA ŚCIEŻKA (Dopasowana do Twojego systemu):
+      - "/mnt/g/Mój dysk:/gdrive_raw:ro"
+    environment:
+      - PYTHONUNBUFFERED=1
