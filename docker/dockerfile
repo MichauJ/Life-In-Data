@@ -1,13 +1,14 @@
 FROM python:3.11-slim
 
+# Ustawiamy katalog roboczy
 WORKDIR /app
 
-# Kopiujemy requirements i instalujemy
+# Najpierw kopiujemy tylko wymagania, żeby przyspieszyć budowanie
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiujemy resztę kodu (na wypadek, gdybyśmy nie używali wolumenów, np. w chmurze)
+# Kopiujemy resztę projektu
 COPY . .
 
-# Uruchamiamy główny skrypt
+# (Opcjonalnie) Możemy zostawić CMD pusty, bo nadpisujemy go w docker-compose
 CMD ["python", "src/main.py"]
