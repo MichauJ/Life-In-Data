@@ -1,17 +1,24 @@
-import os
+from src.ingestion.habits import process_habits
+from src.ingestion.stayfree import process_stayfree
+from src.transformation.build_mart import transform_data
 
-def list_gdrive_files():
-    print("--- Life-In-Data: Inicjalizacja silnika ---")
-    path = "/app/gdrive_raw"
+def main():
+    print("=== LIFE-IN-DATA: URUCHAMIANIE PIPELINE'U ===")
     
-    if os.path.exists(path):
-        print(f"Sukces! Widzę Twój Google Drive pod ścieżką: {path}")
-        files = os.listdir(path)
-        print(f"Znaleziono {len(files)} obiektów w folderze głównym GDrive:")
-        for f in files[:10]:  # Pokaż tylko pierwsze 10 dla porządku
-            print(f" - {f}")
-    else:
-        print(f"BŁĄD: Nie znaleziono ścieżki {path}. Sprawdź montowanie dysku G: w WSL.")
+    # Krok: Habits
+    try:
+    # 1. Pobierz i wyczyść Nawyki
+        process_habits()
+        
+        # 2. Pobierz i wyczyść StayFree
+        process_stayfree()
+        
+        # 3. Połącz dane w DuckDB
+        transform_data()
+    except Exception as e:
+        print(f"Błąd podczas przetwarzania: {e}")
+
+    print("=== PROCES ZAKOŃCZONY ===")
 
 if __name__ == "__main__":
-    list_gdrive_files()
+    main()

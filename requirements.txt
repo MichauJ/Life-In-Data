@@ -2,3 +2,5 @@ pandas
 duckdb
 python-dotenv
 requests
+xlrd
+openpyxl

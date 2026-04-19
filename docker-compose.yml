@@ -4,9 +4,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     volumes:
-      # Mapujemy cały bieżący folder projektu (kropka) do /app w kontenerze
+      # Mapujemy cały folder projektu (z WSL) do /app w kontenerze
       - .:/app
-      # Mapujemy dane surowe z Google Drive do podfolderu gdrive_raw
+      # Mapujemy dane z GDrive (tylko do odczytu)
       - "/mnt/g/Mój dysk:/app/gdrive_raw:ro"
     environment:
       - PYTHONUNBUFFERED=1
+      # KLUCZOWE: Mówimy Pythonowi, że w folderze /app są nasze moduły
+      - PYTHONPATH=/app
+    # Uruchamiamy main.py bezpośrednio
+    command: python /app/src/main.py
