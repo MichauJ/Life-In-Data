@@ -1,37 +1,36 @@
 import os
 import sqlite3
 import pandas as pd
+from src.utils.config_loader import cfg
 
 def get_latest_habits_backup():
-    backup_dir = "/app/gdrive_raw/Dokumenty/Me, Myself & I/Nawyki backup"
+    # Pobieramy ścieżkę z YAML przez loader
+    backup_dir = cfg['paths']['habits_backup_dir']
+    
     if not os.path.exists(backup_dir):
-        print(f"BŁĄD: Nie znaleziono folderu: {backup_dir}")
+        print(f"BŁĄD: Folder {backup_dir} nie istnieje.")
         return None
 
-    # Pobieramy pełne ścieżki do wszystkich plików .db
+    # Pobieramy pliki i wybieramy najnowszy po dacie modyfikacji
     files = [os.path.join(backup_dir, f) for f in os.listdir(backup_dir) if f.endswith('.db')]
     
     if not files:
-        print("Brak plików backupu Habits w folderze.")
+        print("Brak plików backupu Habits.")
         return None
 
-    # KLUCZOWA ZMIANA: Wybieramy plik, który był ostatnio edytowany/zapisany na dysku
-    latest_file = max(files, key=os.path.getmtime)
-    return latest_file
+    return max(files, key=os.path.getmtime)
 
 def process_habits():
     path = get_latest_habits_backup()
     if not path:
         return
 
-    # Wyświetlamy informację w konsoli (widoczną w docker compose up)
     print(f"\n--- 📂 ETAP HABITS ---")
     print(f"WYKORZYSTANY PLIK: {os.path.basename(path)}")
-    print(f"----------------------")
 
     conn = sqlite3.connect(path)
     
-    # Zapytanie bez zbędnych kolumn źródłowych
+    # Zapytanie wyciągające typy i wartości (zgodnie z nową logiką)
     query = """
     SELECT 
         h.name AS habit_name,
@@ -47,11 +46,18 @@ def process_habits():
     try:
         df = pd.read_sql_query(query, conn)
         
-        # Zapisujemy czyste dane bez kolumny o źródle
-        os.makedirs("data/raw/habits", exist_ok=True)
-        df.to_csv("data/raw/habits/habits_history.csv", index=False)
-        print(f"Sukces! Wyekstrahowano {len(df)} rekordów.")
+        # Pobieramy ścieżkę zapisu z konfiguracji
+        output_path = cfg['paths']['habits_raw_csv']
         
+        # Tworzymy folder, jeśli nie istnieje
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Zapis do CSV
+        df.to_csv(output_path, index=False)
+        print(f"Sukces! Wyekstrahowano {len(df)} rekordów do {output_path}")
+        
+    except Exception as e:
+        print(f"Błąd podczas odczytu bazy Habits: {e}")
     finally:
         conn.close()
 
