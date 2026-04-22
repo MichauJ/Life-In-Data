@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from src.utils.config_loader import cfg
 from src.utils.logger_setup import setup_logger
-
+import sys
 # Inicjalizacja loggera
 logger = setup_logger("ingest-stayfree")
 
@@ -28,22 +28,39 @@ def parse_stayfree_duration(duration_str):
     return round(total_minutes, 2)
 
 def parse_polish_date(date_str):
-    """Konwertuje polskie daty tekstowe na format ISO (YYYY-MM-DD)."""
+    """Konwertuje polskie daty tekstowe lub obiekty datetime na format ISO."""
+    if pd.isna(date_str):
+        return None
+        
+    # Jeśli Excel już wczytał to jako datę (obiekt datetime)
+    if not isinstance(date_str, str):
+        try:
+            return date_str.strftime('%Y-%m-%d')
+        except:
+            return str(date_str)
+
     miesiace = {
         'stycznia': '01', 'lutego': '02', 'marca': '03', 'kwietnia': '04',
         'maja': '05', 'czerwca': '06', 'lipca': '07', 'sierpnia': '08',
         'września': '09', 'października': '10', 'listopada': '11', 'grudnia': '12'
     }
+    
     try:
-        parts = str(date_str).split()
+        # Usuwamy zbędne białe znaki i normalizujemy
+        clean_str = re.sub(r'\s+', ' ', str(date_str)).strip()
+        parts = clean_str.split()
+        
         if len(parts) < 3:
-            return date_str
+            return clean_str
+            
         day = parts[0].zfill(2)
         month = miesiace.get(parts[1].lower(), '01')
-        year = parts[2]
+        # Usuwamy ewentualne ".0" lub ".1" z roku
+        year = parts[2].split('.')[0]
+        
         return f"{year}-{month}-{day}"
     except Exception:
-        return date_str
+        return str(date_str)
 
 def process_stayfree():
     """Główny proces ETL dla danych StayFree."""
@@ -94,6 +111,14 @@ def process_stayfree():
         df_final = df_long[df_long['usage_minutes'] > 0].copy()
         df_final = df_final[['date', 'aplikacja', 'urządzenie', 'usage_minutes']]
 
+        invalid_dates = df_final[~df_final['date'].str.contains(r'^\d{4}-\d{2}-\d{2}$', na=False)]
+        
+        if not invalid_dates.empty:
+            sample_bad = invalid_dates['date'].iloc[0]
+            logger.error(f"BŁĄD: Wykryto niepoprawne formaty dat po konwersji (np. '{sample_bad}').")
+            logger.error("Proces przerwany, aby zapobiec zanieczyszczeniu bazy.")
+            sys.exit(1) # Zatrzymujemy pipeline natychmiast!
+
         # 6. Zapis
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         df_final.to_csv(output_path, index=False, encoding='utf-8')
@@ -103,6 +128,6 @@ def process_stayfree():
 
     except Exception as e:
         logger.error(f"Błąd krytyczny podczas przetwarzania StayFree: {str(e)}", exc_info=True)
-
+        sys.exit(1)
 if __name__ == "__main__":
     process_stayfree()

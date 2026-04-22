@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 from src.utils.config_loader import cfg
 from src.utils.logger_setup import setup_logger
-
+import sys
 # Inicjalizacja profesjonalnego loggera
 logger = setup_logger("ingest-habits")
 
@@ -65,6 +65,7 @@ def process_habits():
     except Exception as e:
         # exc_info=True sprawi, że w logach pojawi się pełny traceback błędu
         logger.error(f"Błąd podczas odczytu bazy Habits: {str(e)}", exc_info=True)
+        sys.exit(1)
     finally:
         conn.close()
         logger.info("Połączenie z bazą SQLite zostało zamknięte.")

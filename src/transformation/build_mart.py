@@ -2,7 +2,7 @@ import duckdb
 import os
 from src.utils.config_loader import cfg
 from src.utils.logger_setup import setup_logger
-
+import sys
 # Inicjalizacja loggera dla etapu transformacji
 logger = setup_logger("transform-mart")
 
@@ -27,11 +27,11 @@ def transform_data():
     
     try:
         # 1. TABELA FAKTÓW: StayFree
-        logger.info(f"Budowanie tabeli fact_stayfree z pliku: {os.path.basename(stayfree_csv)}")
+        logger.info(f"Budowanie tabeli fact_stayfree...")
         con.execute(f"""
             CREATE OR REPLACE TABLE fact_stayfree AS
             SELECT 
-                date, 
+                CAST(date AS DATE) AS date,  -- <--- JAWNE RZUTOWANIE NA DATĘ
                 aplikacja, 
                 urządzenie, 
                 usage_minutes 
@@ -39,11 +39,11 @@ def transform_data():
         """)
 
         # 2. TABELA FAKTÓW: Habits
-        logger.info(f"Budowanie tabeli fact_habits z pliku: {os.path.basename(habits_csv)}")
+        logger.info(f"Budowanie tabeli fact_habits...")
         con.execute(f"""
             CREATE OR REPLACE TABLE fact_habits AS
             SELECT 
-                date,
+                CAST(date AS DATE) AS date,  -- <--- JAWNE RZUTOWANIE NA DATĘ
                 habit_name,
                 CASE WHEN habit_type = 0 THEN 'Tak/Nie' ELSE 'Mierzalny' END AS type_label,
                 habit_unit,
@@ -97,7 +97,7 @@ def transform_data():
 
     except Exception as e:
         logger.error(f"KRYTYCZNY BŁĄD PODCZAS TRANSFORMACJI: {str(e)}", exc_info=True)
-    
+        sys.exit(1)
     finally:
         con.close()
         logger.info("Połączenie z DuckDB zostało zamknięte.")
