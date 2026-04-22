@@ -6,8 +6,8 @@ paths:
   stayfree_source_dir: "/app/gdrive_raw/Dokumenty/Me, Myself & I/StayFree statystyki"
   
   # Ścieżki przetwarzania (wewnątrz projektu)
-  habits_raw_csv: "data/raw/habits/habits_history.csv"
-  stayfree_raw_csv: "data/raw/stayfree/stayfree_usage.csv"
+  habits_raw_parquet: "data/raw/habits/habits_history.parquet"
+  stayfree_raw_parquet: "data/raw/stayfree/stayfree_usage.parquet"
   final_db: "data/final/life_in_data.duckdb"
 
 logic:

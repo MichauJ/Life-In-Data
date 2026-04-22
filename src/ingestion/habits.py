@@ -53,13 +53,13 @@ def process_habits():
         df = pd.read_sql_query(query, conn)
         
         # Pobieramy ścieżkę zapisu z konfiguracji
-        output_path = cfg['paths']['habits_raw_csv']
+        output_path = cfg['paths']['habits_raw_parquet']
         
         # Tworzymy folder, jeśli nie istnieje
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         # Zapis do CSV
-        df.to_csv(output_path, index=False)
+        df.to_parquet(output_path, index=False)
         logger.info(f"Sukces! Wyekstrahowano {len(df)} rekordów do: {output_path}")
         
     except Exception as e:

@@ -66,7 +66,7 @@ def process_stayfree():
     """Główny proces ETL dla danych StayFree."""
     # Pobieramy ścieżki z centralnej konfiguracji
     source_dir = cfg['paths']['stayfree_source_dir']
-    output_path = cfg['paths']['stayfree_raw_csv']
+    output_path = cfg['paths']['stayfree_raw_parquet']
     
     logger.info(f"Rozpoczynam proces StayFree. Szukam plików w: {source_dir}")
 
@@ -121,7 +121,7 @@ def process_stayfree():
 
         # 6. Zapis
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        df_final.to_csv(output_path, index=False, encoding='utf-8')
+        df_final.to_parquet(output_path, index=False)
         
         logger.info(f"Sukces! Dane zapisane w: {output_path}")
         logger.info(f"Rozmiar po optymalizacji: {len(df_final)} wierszy (zredukowano z ok. {len(df_long)})")

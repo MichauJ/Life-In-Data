@@ -10,8 +10,8 @@ def transform_data():
     """Tworzy model danych w DuckDB: fakty StayFree, fakty Habits oraz kalendarz."""
     
     db_path = cfg['paths']['final_db']
-    habits_csv = cfg['paths']['habits_raw_csv']
-    stayfree_csv = cfg['paths']['stayfree_raw_csv']
+    habits_parquet = cfg['paths']['habits_raw_parquet']
+    stayfree_parquet = cfg['paths']['stayfree_raw_parquet']
     
     divider = cfg['logic']['habit_value_divider']
     start_date = cfg['logic']['calendar_start_date']
@@ -35,7 +35,7 @@ def transform_data():
                 aplikacja, 
                 urządzenie, 
                 usage_minutes 
-            FROM read_csv_auto('{stayfree_csv}')
+            FROM read_parquet('{stayfree_parquet}')
         """)
 
         # 2. TABELA FAKTÓW: Habits
@@ -52,7 +52,7 @@ def transform_data():
                     WHEN habit_type = 1 THEN habit_value / {divider}
                     ELSE 0 
                 END AS result_value
-            FROM read_csv_auto('{habits_csv}')
+            FROM read_parquet('{habits_parquet}')
         """)
 
         # 3. TABELA WYMIARÓW: Kalendarz
