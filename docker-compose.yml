@@ -3,11 +3,14 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    user: "1000:1000"
     volumes:
       # Mapujemy cały folder projektu (z WSL) do /app w kontenerze
       - .:/app
       # Mapujemy dane z GDrive (tylko do odczytu)
       - "/mnt/g/Mój dysk:/app/gdrive_raw:ro"
+    env_file:
+      - .env
     environment:
       - PYTHONUNBUFFERED=1
       # KLUCZOWE: Mówimy Pythonowi, że w folderze /app są nasze moduły

@@ -1,0 +1,26 @@
+stages:
+  ingest-habits:
+    cmd: PYTHONPATH=. python src/ingestion/habits.py
+    deps:
+      - src/ingestion/habits.py
+      - config/settings.yaml
+    outs:
+      - data/raw/habits/habits_history.csv
+
+  ingest-stayfree:
+    cmd: PYTHONPATH=. python src/ingestion/stayfree.py
+    deps:
+      - src/ingestion/stayfree.py
+      - config/settings.yaml
+    outs:
+      - data/raw/stayfree/stayfree_usage.csv
+
+  build-mart:
+    cmd: PYTHONPATH=. python src/transformation/build_mart.py
+    deps:
+      - data/raw/habits/habits_history.csv
+      - data/raw/stayfree/stayfree_usage.csv
+      - src/transformation/build_mart.py
+      - config/settings.yaml
+    outs:
+      - data/final/life_in_data.duckdb

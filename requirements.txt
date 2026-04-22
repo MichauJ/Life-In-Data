@@ -5,3 +5,5 @@ requests
 xlrd
 openpyxl
 pyyaml
+dvc
+dvc-gdrive

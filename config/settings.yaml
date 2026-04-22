@@ -12,5 +12,5 @@ paths:
 
 logic:
   habit_value_divider: 1000.0
-  calendar_start_date: "2024-01-01"
+  calendar_start_date: "2018-01-01"
   calendar_end_date: "2027-01-01"

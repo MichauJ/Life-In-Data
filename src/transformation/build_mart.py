@@ -1,9 +1,14 @@
 import duckdb
 import os
 from src.utils.config_loader import cfg
+from src.utils.logger_setup import setup_logger
+
+# Inicjalizacja loggera dla etapu transformacji
+logger = setup_logger("transform-mart")
 
 def transform_data():
-    # Pobieramy ścieżki i parametry z centralnej konfiguracji
+    """Tworzy model danych w DuckDB: fakty StayFree, fakty Habits oraz kalendarz."""
+    
     db_path = cfg['paths']['final_db']
     habits_csv = cfg['paths']['habits_raw_csv']
     stayfree_csv = cfg['paths']['stayfree_raw_csv']
@@ -12,17 +17,17 @@ def transform_data():
     start_date = cfg['logic']['calendar_start_date']
     end_date = cfg['logic']['calendar_end_date']
 
+    logger.info("Rozpoczynam etap transformacji w DuckDB...")
+    
     # Upewniamy się, że folder docelowy istnieje
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     
     # Łączymy się z bazą DuckDB
     con = duckdb.connect(db_path)
     
-    print("\n--- 🏗️ ETAP TRANSFORMACJI (DuckDB) ---")
-
     try:
-        # 1. TABELA FAKTÓW: StayFree (Szczegółowe użycie aplikacji)
-        print(f"Przetwarzanie faktów: {os.path.basename(stayfree_csv)}...")
+        # 1. TABELA FAKTÓW: StayFree
+        logger.info(f"Budowanie tabeli fact_stayfree z pliku: {os.path.basename(stayfree_csv)}")
         con.execute(f"""
             CREATE OR REPLACE TABLE fact_stayfree AS
             SELECT 
@@ -33,8 +38,8 @@ def transform_data():
             FROM read_csv_auto('{stayfree_csv}')
         """)
 
-        # 2. TABELA FAKTÓW: Habits (Nawyki z logiką typów i skalowaniem)
-        print(f"Przetwarzanie faktów: {os.path.basename(habits_csv)}...")
+        # 2. TABELA FAKTÓW: Habits
+        logger.info(f"Budowanie tabeli fact_habits z pliku: {os.path.basename(habits_csv)}")
         con.execute(f"""
             CREATE OR REPLACE TABLE fact_habits AS
             SELECT 
@@ -42,7 +47,6 @@ def transform_data():
                 habit_name,
                 CASE WHEN habit_type = 0 THEN 'Tak/Nie' ELSE 'Mierzalny' END AS type_label,
                 habit_unit,
-                -- Korekta wartości: mierzalne dzielimy przez {divider}, binarne zostawiamy
                 CASE 
                     WHEN habit_type = 0 THEN habit_value 
                     WHEN habit_type = 1 THEN habit_value / {divider}
@@ -51,8 +55,8 @@ def transform_data():
             FROM read_csv_auto('{habits_csv}')
         """)
 
-        # 3. TABELA WYMIARÓW: Kalendarz (dim_calendar)
-        print(f"Generowanie wymiaru kalendarza ({start_date} do {end_date})...")
+        # 3. TABELA WYMIARÓW: Kalendarz
+        logger.info(f"Generowanie wymiaru dim_calendar ({start_date} do {end_date})")
         con.execute(f"""
             CREATE OR REPLACE TABLE dim_calendar AS
             SELECT
@@ -78,23 +82,25 @@ def transform_data():
             )
         """)
 
-        # Usuwamy starą tabelę master_table (pozostałość po poprzedniej architekturze)
+        # Czyszczenie starej architektury
         con.execute("DROP TABLE IF EXISTS master_table")
 
-        print(f"✓ Sukces! Baza {os.path.basename(db_path)} gotowa.")
-        
-        # Szybka kontrola jakości w logach
-        row_count = con.execute("SELECT COUNT(*) FROM fact_stayfree").fetchone()[0]
-        print(f"  [Statystyki] fact_stayfree: {row_count} wierszy")
-        
-        row_count_habits = con.execute("SELECT COUNT(*) FROM fact_habits").fetchone()[0]
-        print(f"  [Statystyki] fact_habits: {row_count_habits} wierszy")
+        # LOGOWANIE STATYSTYK (Data Quality Check)
+        stats_stayfree = con.execute("SELECT COUNT(*) FROM fact_stayfree").fetchone()[0]
+        stats_habits = con.execute("SELECT COUNT(*) FROM fact_habits").fetchone()[0]
+        stats_calendar = con.execute("SELECT COUNT(*) FROM dim_calendar").fetchone()[0]
+
+        logger.info("Transformacja zakończona sukcesem.")
+        logger.info(f"Statystyki bazy: fact_stayfree ({stats_stayfree} wierszy), "
+                    f"fact_habits ({stats_habits} wierszy), "
+                    f"dim_calendar ({stats_calendar} dni)")
 
     except Exception as e:
-        print(f"❌ BŁĄD PODCZAS TRANSFORMACJI: {e}")
+        logger.error(f"KRYTYCZNY BŁĄD PODCZAS TRANSFORMACJI: {str(e)}", exc_info=True)
     
     finally:
         con.close()
+        logger.info("Połączenie z DuckDB zostało zamknięte.")
 
 if __name__ == "__main__":
     transform_data()

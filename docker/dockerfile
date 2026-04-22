@@ -1,14 +1,29 @@
 FROM python:3.11-slim
 
+# Instalacja zależności systemowych (potrzebne dla DVC i Google Drive)
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Tworzymy użytkownika o Twoim UID (1000)
+# Nadajemy mu nazwę 'developer' (może być dowolna)
+RUN useradd -m -u 1000 developer
+
 # Ustawiamy katalog roboczy
 WORKDIR /app
 
-# Najpierw kopiujemy tylko wymagania, żeby przyspieszyć budowanie
+# Kopiujemy requirements i instalujemy paczki jako root
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiujemy resztę projektu
-COPY . .
+# Zmieniamy właściciela folderu /app na naszego użytkownika
+RUN chown -R developer:developer /app
 
-# (Opcjonalnie) Możemy zostawić CMD pusty, bo nadpisujemy go w docker-compose
+# Przełączamy się na użytkownika 'developer'
+USER developer
+
+# Kopiujemy resztę kodu
+COPY --chown=developer:developer . .
+
+# Domyślna komenda (można ją nadpisać w docker-compose)
 CMD ["python", "src/main.py"]
