@@ -1,0 +1,17 @@
+Zapisz wszystkie zmiany w plikach nad którymi pracowałeś.
+
+Sprawdź status zmienionych plików komendą git status.
+
+Dodaj pliki do poczekalni komendą git add . lub podając nazwy konkretnych plików.
+
+Zatwierdź zmiany komendą git commit -m "tutaj wpisz krótki opis tego co zrobiłeś".
+
+Pobierz najnowsze zmiany z serwera dla gałęzi głównej komendą git fetch origin.
+
+Scal najnowszy main do swojego brancha komendą git merge origin/main aby uniknąć konfliktów w przyszłości.
+
+Rozwiąż ewentualne konflikty w kodzie jeśli zostaną zgłoszone przez Gita.
+
+Przetestuj czy aplikacja nadal działa poprawnie po połączeniu zmian.
+
+Wyślij swoją pracę na serwer komendą git push origin nazwa-twojego-brancha.
