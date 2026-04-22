@@ -1,0 +1,16 @@
+# config/settings.yaml
+
+paths:
+  # Ścieżki surowe (z zamontowanego GDrive w kontenerze)
+  habits_backup_dir: "/app/gdrive_raw/Dokumenty/Me, Myself & I/Nawyki backup"
+  stayfree_source_dir: "/app/gdrive_raw/Dokumenty/Me, Myself & I/StayFree statystyki"
+  
+  # Ścieżki przetwarzania (wewnątrz projektu)
+  habits_raw_csv: "data/raw/habits/habits_history.csv"
+  stayfree_raw_csv: "data/raw/stayfree/stayfree_usage.csv"
+  final_db: "data/final/life_in_data.duckdb"
+
+logic:
+  habit_value_divider: 1000.0
+  calendar_start_date: "2018-01-01"
+  calendar_end_date: "2027-01-01"

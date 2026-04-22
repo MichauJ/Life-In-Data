@@ -210,3 +210,4 @@ __marimo__/
 *.duckdb
 *.csv
 *.xlsx
+DVC-Storage/

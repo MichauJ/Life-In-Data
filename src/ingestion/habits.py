@@ -1,37 +1,42 @@
 import os
 import sqlite3
 import pandas as pd
+from src.utils.config_loader import cfg
+from src.utils.logger_setup import setup_logger
+
+# Inicjalizacja profesjonalnego loggera
+logger = setup_logger("ingest-habits")
 
 def get_latest_habits_backup():
-    backup_dir = "/app/gdrive_raw/Dokumenty/Me, Myself & I/Nawyki backup"
+    """Wyszukuje najnowszy plik bazy danych .db w katalogu backupu."""
+    backup_dir = cfg['paths']['habits_backup_dir']
+    
     if not os.path.exists(backup_dir):
-        print(f"BŁĄD: Nie znaleziono folderu: {backup_dir}")
+        logger.error(f"Katalog backupu nie istnieje: {backup_dir}")
         return None
 
-    # Pobieramy pełne ścieżki do wszystkich plików .db
+    # Pobieramy pliki i wybieramy najnowszy po dacie modyfikacji
     files = [os.path.join(backup_dir, f) for f in os.listdir(backup_dir) if f.endswith('.db')]
     
     if not files:
-        print("Brak plików backupu Habits w folderze.")
+        logger.warning(f"Nie znaleziono żadnych plików .db w katalogu: {backup_dir}")
         return None
 
-    # KLUCZOWA ZMIANA: Wybieramy plik, który był ostatnio edytowany/zapisany na dysku
     latest_file = max(files, key=os.path.getmtime)
+    logger.info(f"Wybrano najnowszy backup: {os.path.basename(latest_file)}")
     return latest_file
 
 def process_habits():
+    """Główna funkcja przetwarzająca dane z Habits."""
     path = get_latest_habits_backup()
     if not path:
+        logger.error("Przerwanie procesu: Nie odnaleziono pliku źródłowego.")
         return
 
-    # Wyświetlamy informację w konsoli (widoczną w docker compose up)
-    print(f"\n--- 📂 ETAP HABITS ---")
-    print(f"WYKORZYSTANY PLIK: {os.path.basename(path)}")
-    print(f"----------------------")
-
+    logger.info("Rozpoczynam ekstrakcję danych z bazy SQLite...")
     conn = sqlite3.connect(path)
     
-    # Zapytanie bez zbędnych kolumn źródłowych
+    # Zapytanie wyciągające typy i wartości
     query = """
     SELECT 
         h.name AS habit_name,
@@ -47,13 +52,22 @@ def process_habits():
     try:
         df = pd.read_sql_query(query, conn)
         
-        # Zapisujemy czyste dane bez kolumny o źródle
-        os.makedirs("data/raw/habits", exist_ok=True)
-        df.to_csv("data/raw/habits/habits_history.csv", index=False)
-        print(f"Sukces! Wyekstrahowano {len(df)} rekordów.")
+        # Pobieramy ścieżkę zapisu z konfiguracji
+        output_path = cfg['paths']['habits_raw_csv']
         
+        # Tworzymy folder, jeśli nie istnieje
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Zapis do CSV
+        df.to_csv(output_path, index=False)
+        logger.info(f"Sukces! Wyekstrahowano {len(df)} rekordów do: {output_path}")
+        
+    except Exception as e:
+        # exc_info=True sprawi, że w logach pojawi się pełny traceback błędu
+        logger.error(f"Błąd podczas odczytu bazy Habits: {str(e)}", exc_info=True)
     finally:
         conn.close()
+        logger.info("Połączenie z bazą SQLite zostało zamknięte.")
 
 if __name__ == "__main__":
     process_habits()

@@ -1,0 +1,7 @@
+[core]
+    remote = storage
+    no_scm = true
+    autostage = true
+['remote "storage"']
+    url = gdrive://1wWroJ1QHwxn-tZW7gE2puxh3l7b8prJN
+    gdrive_use_service_account = false
